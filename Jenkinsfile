@@ -26,9 +26,9 @@ pipeline {
             dockerImage.push()
 
             // Push con il tag appropriato in base al branch
-            if (env.BRANCH_NAME == 'master') {
+            if (env.BRANCH_NAME == 'main') {
               dockerImage.push('latest')
-            } else if (env.BRANCH_NAME == 'develop') {
+            } else if (env.BRANCH_NAME == 'secondary') {
               dockerImage.push("develop-${env.GIT_COMMIT}")
             } else {
               dockerImage.push("${env.BRANCH_NAME}-${env.GIT_COMMIT}")

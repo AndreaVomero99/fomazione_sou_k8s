@@ -4,6 +4,7 @@ pipeline {
         registryCredential = 'DockerHub'
         dockerImage = ''
         BRANCH_NAME = ''
+        GIT_TAG = ''
     }
     agent any
     stages {
@@ -17,7 +18,9 @@ pipeline {
                 script {
                     git branch: 'main', credentialsId: 'GitHub', url: 'https://github.com/AndreaVomero99/fomazione_sou_k8s'
                     BRANCH_NAME = sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
+                    GIT_TAG = sh(script: 'git describe --tags --exact-match || echo ""', returnStdout: true).trim()
                     echo "Cloned Branch: ${BRANCH_NAME}"
+                    echo "Git Tag: ${GIT_TAG}"
                 }
             }
         }
@@ -26,6 +29,7 @@ pipeline {
                 script {
                     echo "Branch Name: ${BRANCH_NAME}"
                     echo "Git Commit: ${env.GIT_COMMIT}"
+                    echo "Git Tag: ${GIT_TAG}"
                 }
             }
         }
@@ -40,10 +44,12 @@ pipeline {
             steps {
                 script {
                     def tag = ""
-                    if (BRANCH_NAME == 'main') {
+                    if (GIT_TAG) {
+                        tag = GIT_TAG
+                    } else if (BRANCH_NAME == 'main') {
                         tag = 'latest'
                     } else if (BRANCH_NAME == 'secondary') {
-                        tag = "secondary${env.GIT_COMMIT}"
+                        tag = "secondary-${env.GIT_COMMIT}"
                     } else {
                         tag = "${BRANCH_NAME}-${env.GIT_COMMIT}"
                     }
@@ -57,10 +63,12 @@ pipeline {
             steps {
                 script {
                     sh "docker rmi ${imagename}:${env.GIT_COMMIT}"
-                    if (BRANCH_NAME == 'main') {
+                    if (GIT_TAG) {
+                        sh "docker rmi ${imagename}:${GIT_TAG}"
+                    } else if (BRANCH_NAME == 'main') {
                         sh "docker rmi ${imagename}:latest"
                     } else if (BRANCH_NAME == 'secondary') {
-                        sh "docker rmi ${imagename}:secondary${env.GIT_COMMIT}"
+                        sh "docker rmi ${imagename}:secondary-${env.GIT_COMMIT}"
                     } else {
                         sh "docker rmi ${imagename}:${BRANCH_NAME}-${env.GIT_COMMIT}"
                     }
@@ -74,3 +82,4 @@ pipeline {
         }
     }
 }
+

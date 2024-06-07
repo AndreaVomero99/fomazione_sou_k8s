@@ -3,10 +3,17 @@ pipeline {
     imagename = "andreavomero99/ciao"
     registryCredential = 'DockerHub'
     dockerImage = ''
-    BRANCH_NAME = sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
   }
   agent any
   stages {
+    stage('Debug Info') {
+      steps {
+        script {
+          echo "Branch Name: ${env.BRANCH_NAME}"
+          echo "Git Commit: ${env.GIT_COMMIT}"
+        }
+      }
+    }
     stage('Cloning Git') {
       steps {
         git([url: 'https://github.com/AndreaVomero99/fomazione_sou_k8s', branch: 'secondary', credentialsId: 'GitHub'])

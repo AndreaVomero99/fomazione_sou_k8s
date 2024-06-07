@@ -1,14 +1,14 @@
 pipeline {
   environment {
-    imagename = "dockerhub/flaskapp"
-    registryCredential = 'dockerhub'
+    imagename = "AndreaVomero99/formazione_sour"
+    registryCredential = 'DockerHub'
     dockerImage = ''
   }
   agent any
   stages {
     stage('Cloning Git') {
       steps {
-        git([url: 'https://github.com/AndreaVomero99/fomazione_sou_k8s', branch: 'main', credentialsId: 'github-pat'])
+        git([url: 'https://github.com/AndreaVomero99/fomazione_sou_k8s', branch: 'main', credentialsId: 'GitHub'])
  
       }
     }

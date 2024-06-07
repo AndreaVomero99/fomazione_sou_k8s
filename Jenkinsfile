@@ -14,9 +14,10 @@ pipeline {
     }
     stage('Cloning Git') {
       steps {
-        git([url: 'https://github.com/AndreaVomero99/fomazione_sou_k8s', credentialsId: 'GitHub'])
         script {
+          git url: 'https://github.com/AndreaVomero99/fomazione_sou_k8s', credentialsId: 'GitHub', branch: '*/main'
           BRANCH_NAME = sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
+          echo "Cloned Branch: ${BRANCH_NAME}"
         }
       }
     }

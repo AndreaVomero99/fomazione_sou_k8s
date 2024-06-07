@@ -3,7 +3,7 @@ pipeline {
         imagename = "andreavomero99/ciao"
         registryCredential = 'DockerHub'
         dockerImage = ''
-        BRANCH_NAME = "${args.GIT.LOCAL_BRANCH}"
+        BRANCH_NAME = "${env.GIT_LOCAL_BRANCH}"
         GIT_TAG = ''
 
     }

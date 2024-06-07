@@ -3,8 +3,8 @@ pipeline {
         imagename = "andreavomero99/ciao"
         registryCredential = 'DockerHub'
         dockerImage = ''
-        BRANCH_NAME = ''
         GIT_TAG = ''
+       
     }
     agent any
     stages {
@@ -19,7 +19,7 @@ pipeline {
                     git credentialsId: 'GitHub', url: 'https://github.com/AndreaVomero99/fomazione_sou_k8s'
                     BRANCH_NAME = env.GIT_BRANCH.replace('origin/', '')
                     GIT_TAG = sh(script: 'git describe --tags --exact-match || echo ""', returnStdout: true).trim()
-                    echo "Cloned Branch: ${BRANCH_NAME}"
+                    echo "Cloned Branch: ${env.BRANCH_NAME}"
                     echo "Git Tag: ${GIT_TAG}"
                 }
             }
@@ -27,7 +27,7 @@ pipeline {
         stage('Debug Info') {
             steps {
                 script {
-                    echo "Branch Name: ${BRANCH_NAME}"
+                    echo "Branch Name: ${env.BRANCH_NAME}"
                     echo "Git Commit: ${env.GIT_COMMIT}"
                     echo "Git Tag: ${GIT_TAG}"
                 }
@@ -48,12 +48,12 @@ pipeline {
                     if (GIT_TAG) {
                         tag = GIT_TAG
                         additionalTag = 'latest'
-                    } else if (BRANCH_NAME == 'main') {
+                    } else if (env.BRANCH_NAME == 'main') {
                         tag = 'latest'
-                    } else if (BRANCH_NAME == 'secondary') {
+                    } else if (env.BRANCH_NAME == 'secondary') {
                         tag = "secondary-${env.GIT_COMMIT}"
                     } else {
-                        tag = "${BRANCH_NAME}-${env.GIT_COMMIT}"
+                        tag = "${env.BRANCH_NAME}-${env.GIT_COMMIT}"
                     }
                     docker.withRegistry('', registryCredential) {
                         dockerImage.push(tag)
@@ -72,12 +72,12 @@ pipeline {
                     if (GIT_TAG) {
                         tag = GIT_TAG
                         additionalTag = 'latest'
-                    } else if (BRANCH_NAME == 'main') {
+                    } else if (env.BRANCH_NAME == 'main') {
                         tag = 'latest'
-                    } else if (BRANCH_NAME == 'secondary') {
+                    } else if (env.BRANCH_NAME == 'secondary') {
                         tag = "secondary-${env.GIT_COMMIT}"
                     } else {
-                        tag = "${BRANCH_NAME}-${env.GIT_COMMIT}"
+                        tag = "${env. BRANCH_NAME}-${env.GIT_COMMIT}"
                     }
                     sh "docker rmi ${imagename}:${env.GIT_COMMIT}"
                     sh "docker rmi ${imagename}:${tag}"

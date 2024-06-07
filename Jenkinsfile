@@ -3,12 +3,24 @@ pipeline {
     imagename = "andreavomero99/ciao"
     registryCredential = 'DockerHub'
     dockerImage = ''
+    BRANCH_NAME = ''
   }
   agent any
   stages {
     stage('Cloning Git') {
       steps {
-        git([url: 'https://github.com/AndreaVomero99/fomazione_sou_k8s', branch: 'main', credentialsId: 'GitHub'])
+        git([url: 'https://github.com/AndreaVomero99/fomazione_sou_k8s', branch: 'secondary', credentialsId: 'GitHub'])
+        script {
+          BRANCH_NAME = sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
+        }
+      }
+    }
+    stage('Debug Info') {
+      steps {
+        script {
+          echo "Branch Name: ${BRANCH_NAME}"
+          echo "Git Commit: ${env.GIT_COMMIT}"
+        }
       }
     }
     stage('Building image') {
@@ -22,16 +34,13 @@ pipeline {
       steps {
         script {
           docker.withRegistry('', registryCredential) {
-            // Push con il tag GIT_COMMIT
             dockerImage.push()
-
-            // Push con il tag appropriato in base al branch
-            if (env.BRANCH_NAME == 'main') {
+            if (BRANCH_NAME == 'main') {
               dockerImage.push('latest')
-            } else if (env.BRANCH_NAME == 'secondary') {
-              dockerImage.push("develop-${env.GIT_COMMIT}")
+            } else if (BRANCH_NAME == 'secondary') {
+              dockerImage.push("secondary-${env.GIT_COMMIT}")
             } else {
-              dockerImage.push("${env.BRANCH_NAME}-${env.GIT_COMMIT}")
+              dockerImage.push("${BRANCH_NAME}-${env.GIT_COMMIT}")
             }
           }
         }
@@ -41,12 +50,12 @@ pipeline {
       steps {
         script {
           sh "docker rmi ${imagename}:${env.GIT_COMMIT}"
-          if (env.BRANCH_NAME == 'main') {
+          if (BRANCH_NAME == 'main') {
             sh "docker rmi ${imagename}:latest"
-          } else if (env.BRANCH_NAME == 'secondary') {
-            sh "docker rmi ${imagename}:develop-${env.GIT_COMMIT}"
+          } else if (BRANCH_NAME == 'secondary') {
+            sh "docker rmi ${imagename}:secondary-${env.GIT_COMMIT}"
           } else {
-            sh "docker rmi ${imagename}:${env.BRANCH_NAME}-${env.GIT_COMMIT}"
+            sh "docker rmi ${imagename}:${BRANCH_NAME}-${env.GIT_COMMIT}"
           }
         }
       }
@@ -58,4 +67,3 @@ pipeline {
     }
   }
 }
-

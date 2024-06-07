@@ -7,8 +7,6 @@ pipeline {
         GIT_TAG = ''
     }
     agent any
-    gitParameter(type: 'PT_TAG', name: 'TAG', defaultValue: 'main')
-
     stages {
         stage('Clean Workspace') {
             steps {
@@ -46,8 +44,10 @@ pipeline {
             steps {
                 script {
                     def tag = ""
+                    def additionalTag = ""
                     if (GIT_TAG) {
                         tag = GIT_TAG
+                        additionalTag = 'latest'
                     } else if (BRANCH_NAME == 'main') {
                         tag = 'latest'
                     } else if (BRANCH_NAME == 'secondary') {
@@ -56,7 +56,10 @@ pipeline {
                         tag = "${BRANCH_NAME}-${env.GIT_COMMIT}"
                     }
                     docker.withRegistry('', registryCredential) {
-                        dockerImage.push(TAG)
+                        dockerImage.push(tag)
+                        if (additionalTag) {
+                            dockerImage.push(additionalTag)
+                        }
                     }
                 }
             }
@@ -64,15 +67,22 @@ pipeline {
         stage('Remove Unused docker image') {
             steps {
                 script {
-                    sh "docker rmi ${imagename}:${env.GIT_COMMIT}"
+                    def tag = ""
+                    def additionalTag = ""
                     if (GIT_TAG) {
-                        sh "docker rmi ${imagename}:${GIT_TAG}"
+                        tag = GIT_TAG
+                        additionalTag = 'latest'
                     } else if (BRANCH_NAME == 'main') {
-                        sh "docker rmi ${imagename}:latest"
+                        tag = 'latest'
                     } else if (BRANCH_NAME == 'secondary') {
-                        sh "docker rmi ${imagename}:secondary-${env.GIT_COMMIT}"
+                        tag = "secondary-${env.GIT_COMMIT}"
                     } else {
-                        sh "docker rmi ${imagename}:${BRANCH_NAME}-${env.GIT_COMMIT}"
+                        tag = "${BRANCH_NAME}-${env.GIT_COMMIT}"
+                    }
+                    sh "docker rmi ${imagename}:${env.GIT_COMMIT}"
+                    sh "docker rmi ${imagename}:${tag}"
+                    if (additionalTag) {
+                        sh "docker rmi ${imagename}:${additionalTag}"
                     }
                 }
             }
@@ -84,4 +94,3 @@ pipeline {
         }
     }
 }
-

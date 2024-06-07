@@ -3,6 +3,7 @@ pipeline {
     imagename = "andreavomero99/ciao"
     registryCredential = 'DockerHub'
     dockerImage = ''
+    BRANCH_NAME = sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
   }
   agent any
   stages {

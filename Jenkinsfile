@@ -47,7 +47,7 @@ pipeline {
                     } else {
                         tag = "${BRANCH_NAME}-${env.GIT_COMMIT}"
                     }
-                    docker.withRegistry('', registryCredential) 
+                    docker.withRegistry('', registryCredential) {
                         dockerImage.push(tag)
                     }
                 }
@@ -73,4 +73,4 @@ pipeline {
             cleanWs()
         }
     }
-
+}

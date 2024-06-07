@@ -4,7 +4,7 @@ pipeline {
         registryCredential = 'DockerHub'
         dockerImage = ''
         GIT_TAG = ''
-        def currentBranch = env.BRANCH_NAME
+        def currentBranch = "env.BRANCH_NAME"
        
     }
     agent any

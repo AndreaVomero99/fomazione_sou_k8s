@@ -8,6 +8,11 @@ pipeline {
     }
     agent any
     stages {
+        stage('Define Branch') {
+            script {
+                def currentBranch = env.BRANCH_NAME
+                println "($currentBranch)"
+                
         stage('Clean Workspace') {
             steps {
                 cleanWs()

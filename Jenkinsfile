@@ -13,6 +13,7 @@ pipeline {
                 def currentBranch = env.BRANCH_NAME
                 println "($currentBranch)"
             }
+        }
                 
         stage('Clean Workspace') {
             steps {

@@ -1,64 +1,75 @@
 pipeline {
-    environment {
-        imagename = "andreavomero99/ciao"
-        registryCredential = 'DockerHub'
-        dockerImage = ''
-        GIT_TAG = ''
+  environment {
+    imagename = "andreavomero99/ciao"
+    registryCredential = 'DockerHub'
+    dockerImage = ''
+    BRANCH_NAME = ''
+  }
+  agent any
+  stages {
+    stage('Clean Workspace') {
+      steps {
+        cleanWs()
+      }
     }
-    agent any
-    parameters {
-        string(name: 'TAG', defaultValue: '', description: 'Custom tag for Docker image')
+    stage('Cloning Git') {
+      steps {
+        script {
+          git branch: 'secondary', credentialsId: 'GitHub', url: 'https://github.com/AndreaVomero99/fomazione_sou_k8s'
+          BRANCH_NAME = sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
+          echo "Cloned Branch: ${BRANCH_NAME}"
+        }
+      }
     }
-    stages {
-        stage('Clean Workspace') {
-            steps {
-                cleanWs()
-            }
+    stage('Debug Info') {
+      steps {
+        script {
+          echo "Branch Name: ${BRANCH_NAME}"
+          echo "Git Commit: ${env.GIT_COMMIT}"
         }
-        stage('Cloning Git') {
-            steps {
-                script {
-                    git branch: 'secondary', credentialsId: 'GitHub', url: 'https://github.com/AndreaVomero99/fomazione_sou_k8s'
-                    GIT_TAG = sh(script: 'git describe --tags --abbrev=0', returnStdout: true).trim()
-                    echo "Git Tag: ${GIT_TAG}"
-                }
-            }
-        }
-        stage('Building image') {
-            steps {
-                script {
-                    if (params.TAG) {
-                        // Se è stato specificato un tag personalizzato, utilizza quello
-                        GIT_TAG = params.TAG
-                    } else {
-                        // Altrimenti, utilizza il nome del branch seguito dall'ID del commit
-                        GIT_TAG = "${GIT_TAG}-${env.GIT_COMMIT}"
-                    }
-                    dockerImage = docker.build("${imagename}:${GIT_TAG}")
-                }
-            }
-        }
-        stage('Deploy Image') {
-            steps {
-                script {
-                    docker.withRegistry('', registryCredential) {
-                        dockerImage.push()
-                        dockerImage.push("${GIT_TAG}")
-                    }
-                }
-            }
-        }
-        stage('Remove Unused docker image') {
-            steps {
-                script {
-                    sh "docker rmi ${imagename}:${GIT_TAG}"
-                }
-            }
-        }
+      }
     }
-    post {
-        always {
-            cleanWs()
+    stage('Building image') {
+      steps {
+        script {
+          dockerImage = docker.build("${imagename}:${env.GIT_COMMIT}")
         }
+      }
     }
+    stage('Deploy Image') {
+      steps {
+        script {
+          docker.withRegistry('', registryCredential) {
+            dockerImage.push()
+            if (BRANCH_NAME == 'main') {
+              dockerImage.push('latest')
+            } else if (BRANCH_NAME == 'secondary') {
+              dockerImage.push("secondary-${env.GIT_COMMIT}")
+            } else {
+              dockerImage.push("${BRANCH_NAME}-${env.GIT_COMMIT}")
+            }
+          }
+        }
+      }
+    }
+    stage('Remove Unused docker image') {
+      steps {
+        script {
+          sh "docker rmi ${imagename}:${env.GIT_COMMIT}"
+          if (BRANCH_NAME == 'main') {
+            sh "docker rmi ${imagename}:latest"
+          } else if (BRANCH_NAME == 'secondary') {
+            sh "docker rmi ${imagename}:secondary-${env.GIT_COMMIT}"
+          } else {
+            sh "docker rmi ${imagename}:${BRANCH_NAME}-${env.GIT_COMMIT}"
+          }
+        }
+      }
+    }
+  }
+  post {
+    always {
+      cleanWs()
+    }
+  }
 }

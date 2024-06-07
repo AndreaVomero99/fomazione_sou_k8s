@@ -3,9 +3,8 @@ pipeline {
         imagename = "andreavomero99/ciao"
         registryCredential = 'DockerHub'
         dockerImage = ''
-        BRANCH_NAME = "${args.GIT_LOCAL_BRANCH}"
+        BRANCH_NAME = ''
         GIT_TAG = ''
-
     }
     agent any
     stages {

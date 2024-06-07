@@ -7,6 +7,8 @@ pipeline {
         GIT_TAG = ''
     }
     agent any
+    gitParameter(type: 'PT_TAG', name: 'TAG', defaultValue: 'main')
+
     stages {
         stage('Clean Workspace') {
             steps {
@@ -54,7 +56,7 @@ pipeline {
                         tag = "${BRANCH_NAME}-${env.GIT_COMMIT}"
                     }
                     docker.withRegistry('', registryCredential) {
-                        dockerImage.push(tag)
+                        dockerImage.push(TAG)
                     }
                 }
             }

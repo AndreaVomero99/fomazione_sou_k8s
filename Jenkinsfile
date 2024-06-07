@@ -17,11 +17,14 @@ pipeline {
         stage('Cloning Git') {
             steps {
                 script {
-                    // Checkout the branch that triggered the build
+                    // Checkout the branch or tag that triggered the build
                     checkout scm
+                    // Get the current branch name
                     BRANCH_NAME = sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
-                    GIT_TAG = sh(script: 'git describe --tags --exact-match || echo ""', returnStdout: true).trim()
-                    GIT_COMMIT_HASH = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+                    // Get the tag if it exists
+                    GIT_TAG = sh(script: 'git describe --tags --exact-match 2>/dev/null || echo ""', returnStdout: true).trim()
+                    // Get the short commit hash
+                    GIT_COMMIT_HASH = sh(script: 'git rev-parse --short=7 HEAD', returnStdout: true).trim()
                     echo "Cloned Branch: ${BRANCH_NAME}"
                     echo "Git Tag: ${GIT_TAG}"
                     echo "Git Commit: ${GIT_COMMIT_HASH}"
@@ -40,18 +43,9 @@ pipeline {
         stage('Building image') {
             steps {
                 script {
-                    dockerImage = docker.build("${imagename}:${GIT_COMMIT_HASH}")
-                }
-            }
-        }
-        stage('Deploy Image') {
-            steps {
-                script {
                     def tag = ""
-                    def additionalTag = ""
                     if (GIT_TAG) {
                         tag = GIT_TAG
-                        additionalTag = 'latest'
                     } else if (BRANCH_NAME == 'main') {
                         tag = 'latest'
                     } else if (BRANCH_NAME == 'secondary') {
@@ -59,10 +53,20 @@ pipeline {
                     } else {
                         tag = "${BRANCH_NAME}-${GIT_COMMIT_HASH}"
                     }
+                    // Build the Docker image with the determined tag
+                    dockerImage = docker.build("${imagename}:${tag}")
+                }
+            }
+        }
+        stage('Deploy Image') {
+            steps {
+                script {
                     docker.withRegistry('', registryCredential) {
-                        dockerImage.push(tag)
-                        if (additionalTag) {
-                            dockerImage.push(additionalTag)
+                        // Push the Docker image with the determined tag
+                        dockerImage.push()
+                        // If the build was triggered by a git tag, also push the image with the 'latest' tag
+                        if (GIT_TAG) {
+                            dockerImage.push('latest')
                         }
                     }
                 }
@@ -72,10 +76,8 @@ pipeline {
             steps {
                 script {
                     def tag = ""
-                    def additionalTag = ""
                     if (GIT_TAG) {
                         tag = GIT_TAG
-                        additionalTag = 'latest'
                     } else if (BRANCH_NAME == 'main') {
                         tag = 'latest'
                     } else if (BRANCH_NAME == 'secondary') {
@@ -83,10 +85,10 @@ pipeline {
                     } else {
                         tag = "${BRANCH_NAME}-${GIT_COMMIT_HASH}"
                     }
-                    sh "docker rmi ${imagename}:${GIT_COMMIT_HASH}"
+                    // Remove the Docker images to free up space
                     sh "docker rmi ${imagename}:${tag}"
-                    if (additionalTag) {
-                        sh "docker rmi ${imagename}:${additionalTag}"
+                    if (GIT_TAG) {
+                        sh "docker rmi ${imagename}:latest"
                     }
                 }
             }

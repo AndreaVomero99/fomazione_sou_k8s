@@ -16,7 +16,7 @@ pipeline {
         stage('Cloning Git') {
             steps {
                 script {
-                    git credentialsId: 'GitHub', url: 'https://github.com/AndreaVomero99/fomazione_sou_k8s'
+                    git branch: '*/tags/tag name', credentialsId: 'GitHub', url: 'https://github.com/AndreaVomero99/fomazione_sou_k8s'
                     BRANCH_NAME = sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
                     GIT_TAG = sh(script: 'git describe --tags --exact-match || echo ""', returnStdout: true).trim()
                     echo "Cloned Branch: ${BRANCH_NAME}"

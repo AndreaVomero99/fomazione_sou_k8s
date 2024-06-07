@@ -3,7 +3,6 @@ pipeline {
     imagename = "andreavomero99/ciao"
     registryCredential = 'DockerHub'
     dockerImage = ''
-    BRANCH_NAME = ''
   }
   agent any
   stages {
@@ -15,8 +14,8 @@ pipeline {
     stage('Cloning Git') {
       steps {
         script {
-          // Clonare il repository e verificare che il branch sia 'main' o 'secondary'
-          git url: 'https://github.com/AndreaVomero99/fomazione_sou_k8s', credentialsId: 'GitHub', branch: 'main'
+          // Clonare il repository senza specificare il branch, Jenkins userà il branch configurato nel job
+          git url: 'https://github.com/AndreaVomero99/fomazione_sou_k8s', credentialsId: 'GitHub'
           // Ottenere il nome del branch attualmente clonato
           BRANCH_NAME = sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
           echo "Cloned Branch: ${BRANCH_NAME}"

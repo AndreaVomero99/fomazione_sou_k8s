@@ -41,9 +41,9 @@ pipeline {
       steps {
         script {
           sh "docker rmi ${imagename}:${env.GIT_COMMIT}"
-          if (env.BRANCH_NAME == 'master') {
+          if (env.BRANCH_NAME == 'main') {
             sh "docker rmi ${imagename}:latest"
-          } else if (env.BRANCH_NAME == 'develop') {
+          } else if (env.BRANCH_NAME == 'secondary') {
             sh "docker rmi ${imagename}:develop-${env.GIT_COMMIT}"
           } else {
             sh "docker rmi ${imagename}:${env.BRANCH_NAME}-${env.GIT_COMMIT}"

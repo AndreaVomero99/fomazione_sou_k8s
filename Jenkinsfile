@@ -15,7 +15,7 @@ pipeline {
       steps {
         script {
           // Clonare il repository senza specificare il branch, Jenkins userà il branch configurato nel job
-          git url: 'https://github.com/AndreaVomero99/fomazione_sou_k8s', credentialsId: 'GitHub'
+          git url: 'https://github.com/AndreaVomero99/fomazione_sou_k8s', credentialsId: 'GitHub', branch: 'main'
           // Ottenere il nome del branch attualmente clonato
           BRANCH_NAME = sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
           echo "Cloned Branch: ${BRANCH_NAME}"

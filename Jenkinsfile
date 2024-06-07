@@ -7,9 +7,14 @@ pipeline {
   }
   agent any
   stages {
+    stage('Clean Workspace') {
+      steps {
+        cleanWs()
+      }
+    }
     stage('Cloning Git') {
       steps {
-        git([url: 'https://github.com/AndreaVomero99/fomazione_sou_k8s', branch: 'secondary', credentialsId: 'GitHub'])
+        git([url: 'https://github.com/AndreaVomero99/fomazione_sou_k8s', credentialsId: 'GitHub'])
         script {
           BRANCH_NAME = sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
         }

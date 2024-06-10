@@ -46,7 +46,7 @@ pipeline {
                 script {
                     def tag = ""
                     def additionalTag = ""
-                    if (env.GIT_TAG) {
+                    if (env.GIT_TAG && env.GIT_TAG != "") {
                         tag = env.GIT_TAG
                         additionalTag = 'latest'
                     } else if (env.BRANCH_NAME == 'main') {
@@ -70,7 +70,7 @@ pipeline {
                 script {
                     def tag = ""
                     def additionalTag = ""
-                    if (env.GIT_TAG) {
+                    if (env.GIT_TAG && env.GIT_TAG != "") {
                         tag = env.GIT_TAG
                         additionalTag = 'latest'
                     } else if (env.BRANCH_NAME == 'main') {
@@ -95,4 +95,3 @@ pipeline {
         }
     }
 }
-

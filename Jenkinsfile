@@ -17,7 +17,7 @@ pipeline {
                     // Clona il repository senza specificare un branch fisso
                     checkout scm
                     // Ottieni il tag Git (se esiste)
-                    env.GIT_TAG = sh(script: 'git describe --tags --exact-match || echo ""', returnStdout: true).trim()
+                    env.GIT_TAG = sh(script: 'git tag --contains HEAD | head -n 1', returnStdout: true).trim()
                     // Ottieni il nome del branch
                     env.BRANCH_NAME = env.GIT_BRANCH.replaceAll('origin/', '')
                     echo "Cloned Branch: ${env.BRANCH_NAME}"

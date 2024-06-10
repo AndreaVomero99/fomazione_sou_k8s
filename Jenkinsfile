@@ -44,10 +44,8 @@ pipeline {
             steps {
                 script {
                     def tag = ""
-                    def additionalTag = ""
                     if (GIT_TAG) {
                         tag = GIT_TAG
-                        additionalTag = 'latest'
                     } else if (BRANCH_NAME == 'main') {
                         tag = 'latest'
                     } else if (BRANCH_NAME == 'secondary') {
@@ -57,9 +55,6 @@ pipeline {
                     }
                     docker.withRegistry('', registryCredential) {
                         dockerImage.push(tag)
-                        if (additionalTag) {
-                            dockerImage.push(additionalTag)
-                        }
                     }
                 }
             }
@@ -67,22 +62,15 @@ pipeline {
         stage('Remove Unused docker image') {
             steps {
                 script {
-                    def tag = ""
-                    def additionalTag = ""
-                    if (GIT_TAG) {
-                        tag = GIT_TAG
-                        additionalTag = 'latest'
-                    } else if (BRANCH_NAME == 'main') {
-                        tag = 'latest'
-                    } else if (BRANCH_NAME == 'secondary') {
-                        tag = "secondary-${env.GIT_COMMIT}"
-                    } else {
-                        tag = "${BRANCH_NAME}-${env.GIT_COMMIT}"
-                    }
                     sh "docker rmi ${imagename}:${env.GIT_COMMIT}"
-                    sh "docker rmi ${imagename}:${tag}"
-                    if (additionalTag) {
-                        sh "docker rmi ${imagename}:${additionalTag}"
+                    if (GIT_TAG) {
+                        sh "docker rmi ${imagename}:${GIT_TAG}"
+                    } else if (BRANCH_NAME == 'main') {
+                        sh "docker rmi ${imagename}:latest"
+                    } else if (BRANCH_NAME == 'secondary') {
+                        sh "docker rmi ${imagename}:secondary-${env.GIT_COMMIT}"
+                    } else {
+                        sh "docker rmi ${imagename}:${BRANCH_NAME}-${env.GIT_COMMIT}"
                     }
                 }
             }
@@ -94,4 +82,5 @@ pipeline {
         }
     }
 }
+
 

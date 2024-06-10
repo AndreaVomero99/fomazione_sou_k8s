@@ -17,8 +17,8 @@ pipeline {
             steps {
                 script {
                     git branch: 'main', credentialsId: 'GitHub', url: 'https://github.com/AndreaVomero99/fomazione_sou_k8s'
-                    BRANCH_NAME = env.BRANCH_NAME ?: 'main'
-                    GIT_TAG = sh(script: 'git describe --tags --exact-match || echo ""', returnStdout: true).trim()
+                    BRANCH_NAME = env.GIT_BRANCH
+                    GIT_TAG = sh(script: 'git tag --points-at HEAD | head -n 1', returnStdout: true).trim()
                     echo "Cloned Branch: ${BRANCH_NAME}"
                     echo "Git Tag: ${GIT_TAG}"
                 }
@@ -44,10 +44,12 @@ pipeline {
             steps {
                 script {
                     def tag = ""
-                    def additionalTag = ""
                     if (GIT_TAG) {
                         tag = GIT_TAG
-                        additionalTag = 'latest'
+                        dockerImage.push(tag)
+                        if (BRANCH_NAME == 'main') {
+                            dockerImage.push('latest')
+                        }
                     } else if (BRANCH_NAME == 'main') {
                         tag = 'latest'
                     } else if (BRANCH_NAME == 'secondary') {
@@ -57,9 +59,6 @@ pipeline {
                     }
                     docker.withRegistry('', registryCredential) {
                         dockerImage.push(tag)
-                        if (additionalTag) {
-                            dockerImage.push(additionalTag)
-                        }
                     }
                 }
             }
@@ -68,10 +67,11 @@ pipeline {
             steps {
                 script {
                     def tag = ""
-                    def additionalTag = ""
                     if (GIT_TAG) {
                         tag = GIT_TAG
-                        additionalTag = 'latest'
+                        if (BRANCH_NAME == 'main') {
+                            sh "docker rmi ${imagename}:${tag}"
+                        }
                     } else if (BRANCH_NAME == 'main') {
                         tag = 'latest'
                     } else if (BRANCH_NAME == 'secondary') {
@@ -81,9 +81,6 @@ pipeline {
                     }
                     sh "docker rmi ${imagename}:${env.GIT_COMMIT}"
                     sh "docker rmi ${imagename}:${tag}"
-                    if (additionalTag) {
-                        sh "docker rmi ${imagename}:${additionalTag}"
-                    }
                 }
             }
         }
@@ -94,4 +91,5 @@ pipeline {
         }
     }
 }
+
 

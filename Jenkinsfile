@@ -5,7 +5,6 @@ pipeline {
         dockerImage = ''
         BRANCH_NAME = ''
         GIT_TAG = ''
-        LATEST_TAG = ''
     }
     agent any
     stages {
@@ -17,26 +16,20 @@ pipeline {
         stage('Cloning Git') {
             steps {
                 script {
-                    checkout scm
-                    // Ottieni il nome del branch
-                    env.BRANCH_NAME = env.BRANCH_NAME
-                    // Ottieni il tag Git più recente
-                    env.GIT_TAG = sh(script: 'git describe --tags --abbrev=0 || echo ""', returnStdout: true).trim()
-                    // Ottieni il commit del tag più recente
-                    env.LATEST_TAG = sh(script: "git rev-list -n 1 ${env.GIT_TAG} || echo ''", returnStdout: true).trim()
-                    echo "Cloned Branch: ${env.BRANCH_NAME}"
-                    echo "Git Tag: ${env.GIT_TAG}"
-                    echo "Latest Tag Commit: ${env.LATEST_TAG}"
+                    git branch: 'main', credentialsId: 'GitHub', url: 'https://github.com/AndreaVomero99/fomazione_sou_k8s'
+                    BRANCH_NAME = env.BRANCH_NAME ?: 'main'
+                    GIT_TAG = sh(script: 'git describe --tags --exact-match || echo ""', returnStdout: true).trim()
+                    echo "Cloned Branch: ${BRANCH_NAME}"
+                    echo "Git Tag: ${GIT_TAG}"
                 }
             }
         }
         stage('Debug Info') {
             steps {
                 script {
-                    echo "Branch Name: ${env.BRANCH_NAME}"
+                    echo "Branch Name: ${BRANCH_NAME}"
                     echo "Git Commit: ${env.GIT_COMMIT}"
-                    echo "Git Tag: ${env.GIT_TAG}"
-                    echo "Latest Tag Commit: ${env.LATEST_TAG}"
+                    echo "Git Tag: ${GIT_TAG}"
                 }
             }
         }
@@ -52,15 +45,15 @@ pipeline {
                 script {
                     def tag = ""
                     def additionalTag = ""
-                    if (env.GIT_TAG && env.GIT_COMMIT == env.LATEST_TAG) {
-                        tag = env.GIT_TAG
+                    if (GIT_TAG) {
+                        tag = GIT_TAG
                         additionalTag = 'latest'
-                    } else if (env.BRANCH_NAME == 'main') {
+                    } else if (BRANCH_NAME == 'main') {
                         tag = 'latest'
-                    } else if (env.BRANCH_NAME == 'secondary') {
+                    } else if (BRANCH_NAME == 'secondary') {
                         tag = "secondary-${env.GIT_COMMIT}"
                     } else {
-                        tag = "${env.BRANCH_NAME}-${env.GIT_COMMIT}"
+                        tag = "${BRANCH_NAME}-${env.GIT_COMMIT}"
                     }
                     docker.withRegistry('', registryCredential) {
                         dockerImage.push(tag)
@@ -76,15 +69,15 @@ pipeline {
                 script {
                     def tag = ""
                     def additionalTag = ""
-                    if (env.GIT_TAG && env.GIT_COMMIT == env.LATEST_TAG) {
-                        tag = env.GIT_TAG
+                    if (GIT_TAG) {
+                        tag = GIT_TAG
                         additionalTag = 'latest'
-                    } else if (env.BRANCH_NAME == 'main') {
+                    } else if (BRANCH_NAME == 'main') {
                         tag = 'latest'
-                    } else if (env.BRANCH_NAME == 'secondary') {
+                    } else if (BRANCH_NAME == 'secondary') {
                         tag = "secondary-${env.GIT_COMMIT}"
                     } else {
-                        tag = "${env.BRANCH_NAME}-${env.GIT_COMMIT}"
+                        tag = "${BRANCH_NAME}-${env.GIT_COMMIT}"
                     }
                     sh "docker rmi ${imagename}:${env.GIT_COMMIT}"
                     sh "docker rmi ${imagename}:${tag}"

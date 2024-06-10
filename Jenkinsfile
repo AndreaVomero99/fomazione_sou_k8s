@@ -3,20 +3,11 @@ pipeline {
         imagename = "andreavomero99/ciao"
         registryCredential = 'DockerHub'
         dockerImage = ''
+        BRANCH_NAME = ''
         GIT_TAG = ''
-        def currentBranch = "env.BRANCH_NAME"
-       
     }
     agent any
     stages {
-        stage('Define Branch') {
-            steps {
-                script {
-                def currentBranch = env.BRANCH_NAME
-                println "($currentBranch)"
-                }
-            }
-        }       
         stage('Clean Workspace') {
             steps {
                 cleanWs()
@@ -25,10 +16,10 @@ pipeline {
         stage('Cloning Git') {
             steps {
                 script {
-                    git branch: "$currentBranch", credentialsId: 'GitHub', url: 'https://github.com/AndreaVomero99/fomazione_sou_k8s'
-                    BRANCH_NAME = env.GIT_BRANCH.replace('origin/', '')
+                    git branch: 'main', credentialsId: 'GitHub', url: 'https://github.com/AndreaVomero99/fomazione_sou_k8s'
+                    BRANCH_NAME = sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
                     GIT_TAG = sh(script: 'git describe --tags --exact-match || echo ""', returnStdout: true).trim()
-                    echo "Cloned Branch: ${env.BRANCH_NAME}"
+                    echo "Cloned Branch: ${BRANCH_NAME}"
                     echo "Git Tag: ${GIT_TAG}"
                 }
             }
@@ -36,7 +27,7 @@ pipeline {
         stage('Debug Info') {
             steps {
                 script {
-                    echo "Branch Name: ${env.BRANCH_NAME}"
+                    echo "Branch Name: ${BRANCH_NAME}"
                     echo "Git Commit: ${env.GIT_COMMIT}"
                     echo "Git Tag: ${GIT_TAG}"
                 }
@@ -57,12 +48,12 @@ pipeline {
                     if (GIT_TAG) {
                         tag = GIT_TAG
                         additionalTag = 'latest'
-                    } else if (env.BRANCH_NAME == 'main') {
+                    } else if (BRANCH_NAME == 'main') {
                         tag = 'latest'
-                    } else if (env.BRANCH_NAME == 'secondary') {
+                    } else if (BRANCH_NAME == 'secondary') {
                         tag = "secondary-${env.GIT_COMMIT}"
                     } else {
-                        tag = "${env.BRANCH_NAME}-${env.GIT_COMMIT}"
+                        tag = "${BRANCH_NAME}-${env.GIT_COMMIT}"
                     }
                     docker.withRegistry('', registryCredential) {
                         dockerImage.push(tag)
@@ -81,12 +72,12 @@ pipeline {
                     if (GIT_TAG) {
                         tag = GIT_TAG
                         additionalTag = 'latest'
-                    } else if (env.BRANCH_NAME == 'main') {
+                    } else if (BRANCH_NAME == 'main') {
                         tag = 'latest'
-                    } else if (env.BRANCH_NAME == 'secondary') {
+                    } else if (BRANCH_NAME == 'secondary') {
                         tag = "secondary-${env.GIT_COMMIT}"
                     } else {
-                        tag = "${env. BRANCH_NAME}-${env.GIT_COMMIT}"
+                        tag = "${BRANCH_NAME}-${env.GIT_COMMIT}"
                     }
                     sh "docker rmi ${imagename}:${env.GIT_COMMIT}"
                     sh "docker rmi ${imagename}:${tag}"

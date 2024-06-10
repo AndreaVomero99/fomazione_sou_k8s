@@ -3,8 +3,6 @@ pipeline {
         imagename = "andreavomero99/ciao"
         registryCredential = 'DockerHub'
         dockerImage = ''
-        BRANCH_NAME = ''
-        GIT_TAG = ''
     }
     agent any
     stages {
@@ -18,10 +16,10 @@ pipeline {
                 script {
                     // Clona il repository senza specificare un branch fisso
                     checkout scm
-                    // Ottieni il nome del branch
-                    env.BRANCH_NAME = env.GIT_BRANCH.replaceAll('origin/', '')
                     // Ottieni l'ultimo tag Git disponibile
                     env.GIT_TAG = sh(script: 'git describe --tags --abbrev=0 || echo ""', returnStdout: true).trim()
+                    // Ottieni il nome del branch
+                    env.BRANCH_NAME = env.GIT_BRANCH.replaceAll('origin/', '')
                     echo "Cloned Branch: ${env.BRANCH_NAME}"
                     echo "Git Tag: ${env.GIT_TAG}"
                 }
@@ -48,8 +46,7 @@ pipeline {
                 script {
                     def tag = ""
                     def additionalTag = ""
-                    def currentTagCommit = sh(script: "git rev-list -n 1 ${env.GIT_TAG}", returnStdout: true).trim()
-                    if (env.GIT_TAG && env.GIT_COMMIT == currentTagCommit) {
+                    if (env.GIT_TAG && env.GIT_TAG != "") {
                         tag = env.GIT_TAG
                         additionalTag = 'latest'
                     } else if (env.BRANCH_NAME == 'main') {
@@ -73,8 +70,7 @@ pipeline {
                 script {
                     def tag = ""
                     def additionalTag = ""
-                    def currentTagCommit = sh(script: "git rev-list -n 1 ${env.GIT_TAG}", returnStdout: true).trim()
-                    if (env.GIT_TAG && env.GIT_COMMIT == currentTagCommit) {
+                    if (env.GIT_TAG && env.GIT_TAG != "") {
                         tag = env.GIT_TAG
                         additionalTag = 'latest'
                     } else if (env.BRANCH_NAME == 'main') {

@@ -19,7 +19,7 @@ pipeline {
                     // Ottieni il tag Git (se esiste)
                     env.GIT_TAG = sh(script: 'git describe --tags --exact-match || echo ""', returnStdout: true).trim()
                     // Ottieni il nome del branch
-                    env.BRANCH_NAME = env.GIT_BRANCH.replaceAll('origin/', ''
+                    env.BRANCH_NAME = env.GIT_BRANCH.replaceAll('origin/', '')
                     echo "Cloned Branch: ${env.BRANCH_NAME}"
                     echo "Git Tag: ${env.GIT_TAG}"
                 }
@@ -95,3 +95,4 @@ pipeline {
         }
     }
 }
+

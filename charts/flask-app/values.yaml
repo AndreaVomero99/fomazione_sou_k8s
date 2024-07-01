@@ -1,0 +1,31 @@
+# values.yaml
+replicaCount: 1
+
+image:
+  repository: andreavomero99/ciao
+  pullPolicy: IfNotPresent
+  # Il tag può essere specificato durante il deploy con il comando `--set image.tag=<TAG>`
+  tag: "latest"
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  annotations: {}
+  hosts:
+    - host: chart-example.local
+      paths: []
+
+resources: {}
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
